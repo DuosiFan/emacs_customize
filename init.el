@@ -15,6 +15,11 @@
 (setq auto-save-default nil)
 (setq make-backup-files nil)
 
+;; auto revert mode
+(global-auto-revert-mode 1)
+;; auto refresh dired when file changes
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
 ;; make full screen by default
 (add-hook 'window-setup-hook 'toggle-frame-maximized t)
 
@@ -24,6 +29,29 @@
 (setq-default fill-column 80)
 (add-hook 'prog-mode-hook #'auto-fill-mode)
 (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
+
+;; gdb configuration
+(setq gdb-many-windows t
+      gdb-use-separate-io-buffer t)
+(advice-add 'gdb-setup-windows :after
+            (lambda () (set-window-dedicated-p (selected-window) t)))
+(defconst gud-window-register 123456)
+ 
+(defun gud-quit ()
+  (interactive)
+  (gud-basic-call "quit"))
+ 
+(add-hook 'gud-mode-hook
+          (lambda ()
+            (gud-tooltip-mode)
+            (window-configuration-to-register gud-window-register)
+            (local-set-key (kbd "C-q") 'gud-quit)))
+ 
+(advice-add 'gud-sentinel :after
+            (lambda (proc msg)
+              (when (memq (process-status proc) '(signal exit))
+                (jump-to-register gud-window-register)
+                (bury-buffer))))
 
 ;; package manage
 (require 'package)
@@ -87,14 +115,18 @@
   (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
   (yas-global-mode 1))
 
+;; magit
+(use-package magit
+  :ensure t)
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(company-show-quick-access t nil nil "Customized with use-package company")
  '(package-selected-packages
-   '(yasnippet-snippets lsp-ui lsp-mode flycheck company-box company use-package)))
+   '(magit yasnippet-snippets lsp-ui lsp-mode flycheck company-box company use-package)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -102,3 +134,5 @@
  ;; If there is more than one, they won't work right.
  )
 ;;; init.el ends here
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
