@@ -18,6 +18,22 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
+
+;; auto revert mode
+(global-auto-revert-mode 1)
+;; auto refresh dired when file changes
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
+;; make full screen by default
+(add-hook 'window-setup-hook 'toggle-frame-maximized t)
+
+;; line numbers and 80 column rule in all major programming modes
+(global-display-line-numbers-mode t)
+(column-number-mode t)
+(setq-default fill-column 80)
+(add-hook 'prog-mode-hook #'auto-fill-mode)
+(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
+
 ;;; package manager
 (require 'package)
 (setq package-enable-at-startup nil)
@@ -25,11 +41,11 @@
 	     '("melpa" . "https://melpa.org/packages/"))
 
 (package-initialize)
-
 ;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
 	(package-refresh-contents)
 	(package-install 'use-package))
+
 
 ;; easier life
 (use-package ido
@@ -99,7 +115,6 @@
   :ensure t
   :bind ("M-s" . avy-goto-char))
 
-
 ;; programming related
 ;; syntax check
 (use-package flycheck
@@ -133,43 +148,28 @@
   (lsp-keymap-prefix "C-x l")
   (lsp-auto-guess-root nil)
   (lsp-prefer-flymake nil)
-  :hook ((c-mode c++-mode python-mode) . lsp-deferred))
+  :hook ((c-mode c++-mode) . lsp-deferred))
 
 (use-package lsp-ui
   :after lsp-mode
   :ensure t)
 
-;; python environment
-(use-package conda
+;; debug
+(use-package gdb-mi
   :ensure t
-  :init
-  (setq conda-anaconda-home (expand-file-name "~/miniconda3"))
   :config
-  ;; If you want interactive shell support, include:
-  (conda-env-initialize-interactive-shells)
-  ;; If you want eshell support, include:
-  (conda-env-initialize-eshell)
-  ;; If you want auto-activation, include:
-  (conda-env-autoactivate-mode t)
-  ;; Activate the project/virtual env you want to use.
-  ;; Via M-x conda-env-activate RET analyticd-pysystemtrade
-  ;; or
-  ;; (conda-env-activate "analyticd-pysystemtrade")
-  )
+  (setq gdb-many-windows t))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(conda lsp-ui lsp-mode company-box company flycheck counsel ace-window org-bullets which-key try use-package))
- '(warning-suppress-log-types '((comp)))
- '(warning-suppress-types '((comp))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-;;; init.el ends here
+;; template system
+(use-package yasnippet
+  :ensure t
+  :bind
+  ("C-c y s" . yas-insert-snippet)
+  ("C-c y v" . yas-visit-snippet-file)
+  :config
+  (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
+  (yas-global-mode 1))
+
+;; git
+(use-package magit
+  :ensure t)
