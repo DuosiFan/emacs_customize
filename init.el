@@ -9,36 +9,32 @@
 ;; message in *scratch* buffer
 (setq initial-scratch-message nil)
 
+;; no noise
+(scroll-bar-mode -1)
+
 ;; use git instead of backup files
 (setq auto-save-default nil)
 (setq make-backup-files nil)
 
-;; no noise
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-
-
 ;; auto revert mode
 (global-auto-revert-mode 1)
-;; auto refresh dired when file changes
+;; auto refresh dired when file change
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
 ;; make full screen by default
-(add-hook 'window-setup-hook 'toggle-frame-maximized t)
+(add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
 
-;; line numbers and 80 column rule in all major programming modes
-(global-display-line-numbers-mode t)
+;; ruler
 (column-number-mode t)
-(setq-default fill-column 80)
-(add-hook 'prog-mode-hook #'auto-fill-mode)
-(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
+(setq-default fill-column 81)
+(global-display-fill-column-indicator-mode t)
 
 ;;; package manager
 (require 'package)
 (setq package-enable-at-startup nil)
-(add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/"))
+(setq package-archives '(("org"   . "http://orgmode.org/elpa/")
+                         ("gnu"   . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
 
 (package-initialize)
 ;; Bootstrap `use-package'
@@ -46,23 +42,17 @@
 	(package-refresh-contents)
 	(package-install 'use-package))
 
-
-;; easier life
 (use-package ido
   :ensure t
   :config
-  (ido-mode 1)
+  (ido-mode)
   (setq ido-enable-flex-matching t)
   (setq ido-everywhere t)
   (defalias 'list-buffers 'ibuffer))
 
-(use-package try
-  :ensure t)
-
 (use-package which-key
   :ensure t
-  :config
-  (which-key-mode))
+  :init (which-key-mode))
 
 (use-package ace-window
   :ensure t
@@ -74,54 +64,9 @@
        ((t (:inherit ace-jump-face-foreground :height 3.0)))))
     ))
 
-;; org configure
-(use-package org-bullets
+(use-package company-box
   :ensure t
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-
-;; search
-(use-package counsel
-  :ensure t
-  )
-
-(use-package ivy
-  :ensure t
-  :diminish (ivy-mode)
-  :bind (("C-x b" . ivy-switch-buffer))
-  :config
-  (ivy-mode 1)
-  (setq ivy-use-virtual-buffers t)
-  (setq ivy-display-style 'fancy))
-
-
-(use-package swiper
-  :ensure try
-  :bind (("C-s" . swiper)
-	 ("C-r" . swiper)
-	 ("C-c C-r" . ivy-resume)
-	 ("M-x" . counsel-M-x)
-	 ("C-x C-f" . counsel-find-file))
-  :config
-  (progn
-    (ivy-mode 1)
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-display-style 'fancy)
-    (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
-    ))
-
-;; navigation
-(use-package avy
-  :ensure t
-  :bind ("M-s" . avy-goto-char))
-
-;; programming related
-;; syntax check
-(use-package flycheck
-  :defer t
-  :ensure t
-  :hook (after-init . global-flycheck-mode)
-  )
+  :hook (company-mode . company-box-mode))
 
 ;; auto complete frontend
 (use-package company
@@ -132,33 +77,12 @@
   ;; Trigger completion immediately
   (company-idle-delay 0.1)
   ;; Number the candidates (use M-1, M-2 etc to select completions).
-  (company-show-numbers t)
-  :config
-  (global-company-mode 1))
+  (company-show-numbers t))
 
-(use-package company-box
+(use-package eglot
   :ensure t
-  :hook (company-mode . company-box-mode))
-
-;; auto complete backend with lsp
-(use-package lsp-mode
-  :ensure t
-  :defer t
-  :custom
-  (lsp-keymap-prefix "C-x l")
-  (lsp-auto-guess-root nil)
-  (lsp-prefer-flymake nil)
-  :hook ((c-mode c++-mode) . lsp-deferred))
-
-(use-package lsp-ui
-  :after lsp-mode
-  :ensure t)
-
-;; debug
-(use-package gdb-mi
-  :ensure t
-  :config
-  (setq gdb-many-windows t))
+  :hook ((c-mode . eglot-ensure)
+	 (c++-mode . eglot-ensure)))
 
 ;; template system
 (use-package yasnippet
@@ -170,6 +94,6 @@
   (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
   (yas-global-mode 1))
 
-;; git
 (use-package magit
   :ensure t)
+;;; init.el ends here
